@@ -67,20 +67,22 @@ public class Main {
                     System.out.println(command + ": command not found");
                 } else {
                     try {
-                        parts[0] = executable.getAbsolutePath();
-
                         ProcessBuilder pb = new ProcessBuilder(parts);
+
                         Process process = pb.start();
 
                         process.getInputStream().transferTo(System.out);
                         process.getErrorStream().transferTo(System.err);
 
                         process.waitFor();
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
         }
+
+        sc.close();
     }
 }
