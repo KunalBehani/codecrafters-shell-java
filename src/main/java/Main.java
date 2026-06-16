@@ -1,31 +1,10 @@
-import java.io.File;
-import java.util.Scanner;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 public class Main {
 
-    private static File findExecutable(String command) {
-        String pathEnv = System.getenv("PATH");
-
-        if (pathEnv == null) {
-            return null;
-        }
-
-        for (String dir : pathEnv.split(File.pathSeparator)) {
-            File file = new File(dir, command);
-
-            if (file.exists() && file.isFile() && file.canExecute()) {
-                return file;
-            }
-        }
-
-        return null;
-    }
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
-
-        Set<String> builtins = Set.of("echo", "exit", "type");
 
         while (true) {
             System.out.print("$ ");
@@ -34,19 +13,21 @@ public class Main {
                 break;
             }
 
-            String command = sc.nextLine();
+            String input = sc.nextLine();
 
-            if (command.equals("exit")) {
+            if (input.equals("exit")) {
                 break;
             }
 
-            if (command.startsWith("echo ")) {
-                System.out.println(command.substring(5));
+            if (input.startsWith("echo ")) {
+                System.out.println(input.substring(5));
+                continue;
             }
-            else if (command.startsWith("type ")) {
-                String cmd = command.substring(5);
 
-                if (builtins.contains(cmd)) {
+            if (input.startsWith("type ")) {
+                String cmd = input.substring(5);
+
+                if (cmd.equals("echo") || cmd.equals("exit") || cmd.equals("type")) {
                     System.out.println(cmd + " is a shell builtin");
                 } else {
                     File executable = findExecutable(cmd);
@@ -57,30 +38,51 @@ public class Main {
                         System.out.println(cmd + ": not found");
                     }
                 }
+                continue;
             }
-            else {
-                String[] parts = command.split(" ");
 
-                File executable = findExecutable(parts[0]);
+            String[] parts = input.split(" ");
+            File executable = findExecutable(parts[0]);
 
-                if (executable == null) {
-                    System.out.println(command + ": command not found");
-                } else {
-                    try {
-                        parts[0] = executable.getAbsolutePath();
+            if (executable == null) {
+                System.out.println(input + ": command not found");
+                continue;
+            }
 
-                        ProcessBuilder pb = new ProcessBuilder(parts);
-                        Process process = pb.start();
+            parts[0] = executable.getAbsolutePath();
 
-                        process.getInputStream().transferTo(System.out);
-                        process.getErrorStream().transferTo(System.err);
+            Process process = new ProcessBuilder(parts).start();
 
-                        process.waitFor();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(process.getInputStream()));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            process.waitFor();
+        }
+    }
+
+    private static File findExecutable(String command) {
+        String path = System.getenv("PATH");
+
+        if (path == null) {
+            return null;
+        }
+
+        String[] directories = path.split(File.pathSeparator);
+
+        for (String dir : directories) {
+            File file = new File(dir, command);
+
+            if (file.exists() && file.isFile() && file.canExecute()) {
+                return file;
             }
         }
+
+        return null;
     }
 }
