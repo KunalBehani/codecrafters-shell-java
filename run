@@ -1,0 +1,5 @@
+find . -name "*.class" -delete
+rm -rf target
+rm -rf /tmp/codecrafters-build-shell-java
+
+./your_program.sh
