@@ -44,7 +44,6 @@ public class Main {
 
             String command = sc.nextLine();
 
-            // Support both old and new Codecrafters stages
             if (command.equals("exit") || command.equals("exit 0")) {
                 break;
             }
@@ -55,12 +54,22 @@ public class Main {
                 System.out.println(currentDirectory);
             }
             else if (command.startsWith("cd ")) {
-                String path = command.substring(3);
+                String path = command.substring(3).trim();
 
-                File dir = new File(path);
+                File target;
 
-                if (dir.exists() && dir.isDirectory()) {
-                    currentDirectory = dir.getAbsolutePath();
+                if (path.startsWith("/")) {
+                    target = new File(path);
+                } else {
+                    target = new File(currentDirectory, path);
+                }
+
+                if (target.exists() && target.isDirectory()) {
+                    try {
+                        currentDirectory = target.getCanonicalPath();
+                    } catch (Exception e) {
+                        System.out.println("cd: " + path + ": No such file or directory");
+                    }
                 } else {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
@@ -98,7 +107,6 @@ public class Main {
                         process.getErrorStream().transferTo(System.err);
 
                         process.waitFor();
-
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
