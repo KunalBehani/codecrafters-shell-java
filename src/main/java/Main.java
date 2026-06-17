@@ -27,7 +27,13 @@ public class Main {
 
         String currentDirectory = System.getProperty("user.dir");
 
-        Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd");
+        Set<String> builtins = Set.of(
+                "echo",
+                "exit",
+                "type",
+                "pwd",
+                "cd"
+        );
 
         while (true) {
             System.out.print("$ ");
@@ -38,13 +44,17 @@ public class Main {
 
             String command = sc.nextLine();
 
-            if (command.equals("exit 0")) {
+            // Support both old and new Codecrafters stages
+            if (command.equals("exit") || command.equals("exit 0")) {
                 break;
-            } else if (command.startsWith("echo ")) {
+            }
+            else if (command.startsWith("echo ")) {
                 System.out.println(command.substring(5));
-            } else if (command.equals("pwd")) {
+            }
+            else if (command.equals("pwd")) {
                 System.out.println(currentDirectory);
-            } else if (command.startsWith("cd ")) {
+            }
+            else if (command.startsWith("cd ")) {
                 String path = command.substring(3);
 
                 File dir = new File(path);
@@ -54,7 +64,8 @@ public class Main {
                 } else {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
-            } else if (command.startsWith("type ")) {
+            }
+            else if (command.startsWith("type ")) {
                 String cmd = command.substring(5);
 
                 if (builtins.contains(cmd)) {
@@ -68,7 +79,8 @@ public class Main {
                         System.out.println(cmd + ": not found");
                     }
                 }
-            } else {
+            }
+            else {
                 String[] parts = command.split(" ");
 
                 File executable = findExecutable(parts[0]);
