@@ -34,25 +34,43 @@ public class Main {
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
 
-            if (!inSingleQuotes && !inDoubleQuotes && c == '\\') {
-                if (i + 1 < input.length()) {
-                    current.append(input.charAt(i + 1));
-                    i++;
+            if (inSingleQuotes) {
+                if (c == '\'') {
+                    inSingleQuotes = false;
+                } else {
+                    current.append(c);
                 }
-            } else if (c == '\'' && !inDoubleQuotes) {
-                inSingleQuotes = !inSingleQuotes;
-            } else if (c == '"' && !inSingleQuotes) {
-                inDoubleQuotes = !inDoubleQuotes;
-            } else if (Character.isWhitespace(c)
-                    && !inSingleQuotes
-                    && !inDoubleQuotes) {
+            } else if (inDoubleQuotes) {
+                if (c == '\\' && i + 1 < input.length()) {
+                    char next = input.charAt(i + 1);
 
-                if (current.length() > 0) {
-                    args.add(current.toString());
-                    current.setLength(0);
+                    if (next == '"' || next == '\\') {
+                        current.append(next);
+                        i++;
+                    } else {
+                        current.append('\\');
+                    }
+                } else if (c == '"') {
+                    inDoubleQuotes = false;
+                } else {
+                    current.append(c);
                 }
             } else {
-                current.append(c);
+                if (c == '\\' && i + 1 < input.length()) {
+                    current.append(input.charAt(i + 1));
+                    i++;
+                } else if (c == '\'') {
+                    inSingleQuotes = true;
+                } else if (c == '"') {
+                    inDoubleQuotes = true;
+                } else if (Character.isWhitespace(c)) {
+                    if (current.length() > 0) {
+                        args.add(current.toString());
+                        current.setLength(0);
+                    }
+                } else {
+                    current.append(c);
+                }
             }
         }
 
