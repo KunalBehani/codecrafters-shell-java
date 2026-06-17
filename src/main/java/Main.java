@@ -25,16 +25,23 @@ public class Main {
     }
 
     private static String[] parseCommand(String input) {
-        List<String> args = new ArrayList<>();
+        java.util.List<String> args = new java.util.ArrayList<>();
         StringBuilder current = new StringBuilder();
+
         boolean inSingleQuotes = false;
+        boolean inDoubleQuotes = false;
 
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
 
-            if (c == '\'') {
+            if (c == '\'' && !inDoubleQuotes) {
                 inSingleQuotes = !inSingleQuotes;
-            } else if (Character.isWhitespace(c) && !inSingleQuotes) {
+            } else if (c == '"' && !inSingleQuotes) {
+                inDoubleQuotes = !inDoubleQuotes;
+            } else if (Character.isWhitespace(c)
+                    && !inSingleQuotes
+                    && !inDoubleQuotes) {
+
                 if (current.length() > 0) {
                     args.add(current.toString());
                     current.setLength(0);
@@ -61,8 +68,7 @@ public class Main {
                 "exit",
                 "type",
                 "pwd",
-                "cd"
-        );
+                "cd");
 
         while (true) {
             System.out.print("$ ");
@@ -80,8 +86,7 @@ public class Main {
 
             if (command.equals("exit") || command.equals("exit 0")) {
                 break;
-            }
-            else if (parts[0].equals("echo")) {
+            } else if (parts[0].equals("echo")) {
                 StringBuilder output = new StringBuilder();
 
                 for (int i = 1; i < parts.length; i++) {
@@ -92,11 +97,9 @@ public class Main {
                 }
 
                 System.out.println(output);
-            }
-            else if (parts[0].equals("pwd")) {
+            } else if (parts[0].equals("pwd")) {
                 System.out.println(currentDirectory);
-            }
-            else if (parts[0].equals("cd")) {
+            } else if (parts[0].equals("cd")) {
                 if (parts.length < 2) {
                     continue;
                 }
@@ -122,8 +125,7 @@ public class Main {
                 } else {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
-            }
-            else if (parts[0].equals("type")) {
+            } else if (parts[0].equals("type")) {
                 if (parts.length < 2) {
                     continue;
                 }
@@ -141,8 +143,7 @@ public class Main {
                         System.out.println(cmd + ": not found");
                     }
                 }
-            }
-            else {
+            } else {
                 File executable = findExecutable(parts[0]);
 
                 if (executable == null) {
