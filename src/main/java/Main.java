@@ -25,7 +25,7 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        Set<String> builtins = Set.of("echo", "exit", "type");
+        Set<String> builtins = Set.of("echo", "exit", "type", "pwd");
 
         while (true) {
             System.out.print("$ ");
@@ -38,12 +38,11 @@ public class Main {
 
             if (command.equals("exit")) {
                 break;
-            }
-
-            if (command.startsWith("echo ")) {
+            } else if (command.startsWith("echo ")) {
                 System.out.println(command.substring(5));
-            }
-            else if (command.startsWith("type ")) {
+            } else if (command.equals("pwd")) {
+                System.out.println(System.getProperty("user.dir"));
+            } else if (command.startsWith("type ")) {
                 String cmd = command.substring(5);
 
                 if (builtins.contains(cmd)) {
@@ -57,8 +56,7 @@ public class Main {
                         System.out.println(cmd + ": not found");
                     }
                 }
-            }
-            else {
+            } else {
                 String[] parts = command.split(" ");
 
                 File executable = findExecutable(parts[0]);
