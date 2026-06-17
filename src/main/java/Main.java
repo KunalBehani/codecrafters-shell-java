@@ -25,7 +25,9 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        Set<String> builtins = Set.of("echo", "exit", "type", "pwd");
+        String currentDirectory = System.getProperty("user.dir");
+
+        Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd");
 
         while (true) {
             System.out.print("$ ");
@@ -36,12 +38,22 @@ public class Main {
 
             String command = sc.nextLine();
 
-            if (command.equals("exit")) {
+            if (command.equals("exit 0")) {
                 break;
             } else if (command.startsWith("echo ")) {
                 System.out.println(command.substring(5));
             } else if (command.equals("pwd")) {
-                System.out.println(System.getProperty("user.dir"));
+                System.out.println(currentDirectory);
+            } else if (command.startsWith("cd ")) {
+                String path = command.substring(3);
+
+                File dir = new File(path);
+
+                if (dir.exists() && dir.isDirectory()) {
+                    currentDirectory = dir.getAbsolutePath();
+                } else {
+                    System.out.println("cd: " + path + ": No such file or directory");
+                }
             } else if (command.startsWith("type ")) {
                 String cmd = command.substring(5);
 
@@ -66,6 +78,7 @@ public class Main {
                 } else {
                     try {
                         ProcessBuilder pb = new ProcessBuilder(parts);
+                        pb.directory(new File(currentDirectory));
 
                         Process process = pb.start();
 
