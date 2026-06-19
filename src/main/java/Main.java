@@ -8,18 +8,20 @@ import java.util.Set;
 
 public class Main {
     static class Job {
-        int jobNumber;
-        long pid;
-        String command;
-        Process process;
+    int jobNumber;
+    long pid;
+    String command;
+    Process process;
+    boolean doneShown;
 
-        Job(int jobNumber, long pid, String command, Process process) {
-            this.jobNumber = jobNumber;
-            this.pid = pid;
-            this.command = command;
-            this.process = process;
-        }
+    Job(int jobNumber, long pid, String command, Process process) {
+        this.jobNumber = jobNumber;
+        this.pid = pid;
+        this.command = command;
+        this.process = process;
+        this.doneShown = false;
     }
+}
 
     private static File findExecutable(String command) {
         String pathEnv = System.getenv("PATH");
@@ -258,41 +260,57 @@ public class Main {
                 }
             } else if (parts[0].equals("jobs")) {
 
-                int runningCount = 0;
+    List<Job> jobsToRemove = new ArrayList<>();
 
-                for (Job job : jobsList) {
-                    if (job.process.isAlive()) {
-                        runningCount++;
-                    }
-                }
+    int activeJobs = 0;
 
-                int currentRunning = 0;
+    for (Job job : jobsList) {
+        if (job.process.isAlive()) {
+            activeJobs++;
+        }
+    }
 
-                for (Job job : jobsList) {
+    int activeIndex = 0;
 
-                    if (!job.process.isAlive()) {
-                        continue;
-                    }
+    for (Job job : jobsList) {
 
-                    currentRunning++;
+        if (job.process.isAlive()) {
 
-                    char marker = ' ';
+            activeIndex++;
 
-                    if (runningCount == 1) {
-                        marker = '+';
-                    } else if (currentRunning == runningCount) {
-                        marker = '+';
-                    } else if (currentRunning == runningCount - 1) {
-                        marker = '-';
-                    }
+            char marker = ' ';
 
-                    System.out.printf("[%d]%c  %-24s%s%n",
-                            job.jobNumber,
-                            marker,
-                            "Running",
-                            job.command);
-                }
+            if (activeJobs == 1) {
+                marker = '+';
+            } else if (activeIndex == activeJobs) {
+                marker = '+';
+            } else if (activeIndex == activeJobs - 1) {
+                marker = '-';
             }
+
+            System.out.printf("[%d]%c  %-24s%s%n",
+                    job.jobNumber,
+                    marker,
+                    "Running",
+                    job.command);
+
+        } else {
+
+            if (!job.doneShown) {
+
+                System.out.printf("[%d]+  %-24s%s%n",
+                        job.jobNumber,
+                        "Done",
+                        job.command.replaceAll("\\s*&\\s*$", ""));
+
+                job.doneShown = true;
+                jobsToRemove.add(job);
+            }
+        }
+    }
+
+    jobsList.removeAll(jobsToRemove);
+}
 
             else if (parts[0].equals("type")) {
                 if (parts.length < 2) {
