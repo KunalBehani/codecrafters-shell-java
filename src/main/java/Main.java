@@ -106,6 +106,7 @@ public class Main {
             String[] parts = parseCommand(command);
 
             String outputFile = null;
+            String errorFile = null;
             List<String> cleanParts = new ArrayList<>();
 
             for (int i = 0; i < parts.length; i++) {
@@ -113,9 +114,15 @@ public class Main {
                     if (i + 1 < parts.length) {
                         outputFile = parts[i + 1];
                     }
-                    break;
+                    i++;
+                } else if (parts[i].equals("2>")) {
+                    if (i + 1 < parts.length) {
+                        errorFile = parts[i + 1];
+                    }
+                    i++;
+                } else {
+                    cleanParts.add(parts[i]);
                 }
-                cleanParts.add(parts[i]);
             }
 
             parts = cleanParts.toArray(new String[0]);
@@ -245,7 +252,13 @@ public class Main {
                             process.getInputStream().transferTo(System.out);
                         }
 
-                        process.getErrorStream().transferTo(System.err);
+                        if (errorFile != null) {
+                            try (FileOutputStream errFos = new FileOutputStream(errorFile)) {
+                                process.getErrorStream().transferTo(errFos);
+                            }
+                        } else {
+                            process.getErrorStream().transferTo(System.err);
+                        }
 
                         process.waitFor();
 
