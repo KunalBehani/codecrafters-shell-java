@@ -160,39 +160,21 @@ public class Main {
         try {
             String[] commandParts = command.split("\\|", 2);
 
-            String[] leftCmd = parseCommand(commandParts[0].trim());
-            String[] rightCmd = parseCommand(commandParts[1].trim());
+            ProcessBuilder pb1 = new ProcessBuilder(parseCommand(commandParts[0].trim()));
 
-            ProcessBuilder pb1 = new ProcessBuilder(leftCmd);
-            ProcessBuilder pb2 = new ProcessBuilder(rightCmd);
+            ProcessBuilder pb2 = new ProcessBuilder(parseCommand(commandParts[1].trim()));
 
             pb1.directory(new File(currentDirectory));
             pb2.directory(new File(currentDirectory));
 
-            Process p1 = pb1.start();
+            List<Process> processes = ProcessBuilder.startPipeline(List.of(pb1, pb2));
 
-            pb2.redirectInput(ProcessBuilder.Redirect.PIPE);
-            Process p2 = pb2.start();
+            Process last = processes.get(processes.size() - 1);
 
-            Thread t = new Thread(() -> {
-                try {
-                    p1.getInputStream().transferTo(p2.getOutputStream());
-                    p2.getOutputStream().close();
-                } catch (Exception ignored) {
-                }
-            });
+            last.getInputStream().transferTo(System.out);
+            last.getErrorStream().transferTo(System.err);
 
-            t.setDaemon(true);
-            t.start();
-
-            p2.getInputStream().transferTo(System.out);
-            p2.getErrorStream().transferTo(System.err);
-
-            p2.waitFor();
-
-            if (p1.isAlive()) {
-                p1.destroy();
-            }
+            last.waitFor();
 
         } catch (Exception e) {
             e.printStackTrace();
