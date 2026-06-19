@@ -292,8 +292,9 @@ public class Main {
             }
 
             String command = sc.nextLine();
+
             if (command.contains("|")) {
-                executePipeline(command, currentDirectory);
+                executePipeline(command, currentDirectory, builtins);
                 continue;
             }
             String[] parts = parseCommand(command);
