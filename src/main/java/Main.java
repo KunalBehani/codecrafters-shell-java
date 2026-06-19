@@ -93,7 +93,8 @@ public class Main {
                 "exit",
                 "type",
                 "pwd",
-                "cd");
+                "cd",
+                "jobs");
 
         while (true) {
             System.out.print("$ ");
@@ -231,6 +232,8 @@ public class Main {
                 } else {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
+            } else if (parts[0].equals("jobs")) {
+                // Intentionally empty for this stage
             }
 
             else if (parts[0].equals("type")) {
