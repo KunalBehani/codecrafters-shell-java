@@ -141,12 +141,26 @@ public class Main {
         jobsList.removeAll(jobsToRemove);
     }
 
+    private static int getNextJobNumber(List<Job> jobsList) {
+
+        if (jobsList.isEmpty()) {
+            return 1;
+        }
+
+        int maxJobNumber = 0;
+
+        for (Job job : jobsList) {
+            maxJobNumber = Math.max(maxJobNumber, job.jobNumber);
+        }
+
+        return maxJobNumber + 1;
+    }
+
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
         String currentDirectory = System.getProperty("user.dir");
         List<Job> jobsList = new ArrayList<>();
-        int nextJobNumber = 1;
 
         Set<String> builtins = Set.of(
                 "echo",
@@ -410,17 +424,17 @@ public class Main {
 
                             Process process = pb.start();
 
+                            int jobNumber = getNextJobNumber(jobsList);
+
                             Job job = new Job(
-                                    nextJobNumber,
+                                    jobNumber,
                                     process.pid(),
                                     command,
                                     process);
 
                             jobsList.add(job);
 
-                            System.out.println("[" + nextJobNumber + "] " + process.pid());
-
-                            nextJobNumber++;
+                            System.out.println("[" + jobNumber + "] " + process.pid());
                         } else {
 
                             Process process = pb.start();
