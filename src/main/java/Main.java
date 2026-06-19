@@ -41,6 +41,51 @@ public class Main {
         return null;
     }
 
+    private static String executeBuiltinForPipeline(String[] parts, Set<String> builtins) {
+
+        if (parts.length == 0) {
+            return "";
+        }
+
+        if (parts[0].equals("echo")) {
+
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 1; i < parts.length; i++) {
+                if (i > 1) {
+                    sb.append(" ");
+                }
+                sb.append(parts[i]);
+            }
+
+            sb.append("\n");
+            return sb.toString();
+        }
+
+        if (parts[0].equals("type")) {
+
+            if (parts.length < 2) {
+                return "";
+            }
+
+            String cmd = parts[1];
+
+            if (builtins.contains(cmd)) {
+                return cmd + " is a shell builtin\n";
+            }
+
+            File executable = findExecutable(cmd);
+
+            if (executable != null) {
+                return cmd + " is " + executable.getAbsolutePath() + "\n";
+            }
+
+            return cmd + ": not found\n";
+        }
+
+        return null;
+    }
+
     private static String[] parseCommand(String input) {
         List<String> args = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -156,13 +201,55 @@ public class Main {
         return maxJobNumber + 1;
     }
 
-    private static void executePipeline(String command, String currentDirectory) {
+    private static void executePipeline(
+            String command,
+            String currentDirectory,
+            Set<String> builtins) {
+
         try {
-            String[] commandParts = command.split("\\|", 2);
 
-            ProcessBuilder pb1 = new ProcessBuilder(parseCommand(commandParts[0].trim()));
+            String[] pipelineParts = command.split("\\|", 2);
 
-            ProcessBuilder pb2 = new ProcessBuilder(parseCommand(commandParts[1].trim()));
+            String[] left = parseCommand(pipelineParts[0].trim());
+            String[] right = parseCommand(pipelineParts[1].trim());
+
+            String leftBuiltin = executeBuiltinForPipeline(left, builtins);
+            String rightBuiltin = executeBuiltinForPipeline(right, builtins);
+
+            if (leftBuiltin != null) {
+
+                ProcessBuilder pb = new ProcessBuilder(right);
+
+                pb.directory(new File(currentDirectory));
+
+                Process process = pb.start();
+
+                process.getOutputStream().write(leftBuiltin.getBytes());
+                process.getOutputStream().close();
+
+                process.getInputStream().transferTo(System.out);
+
+                process.waitFor();
+                return;
+            }
+
+            if (rightBuiltin != null) {
+
+                ProcessBuilder pb = new ProcessBuilder(left);
+
+                pb.directory(new File(currentDirectory));
+
+                Process process = pb.start();
+
+                process.waitFor();
+
+                System.out.print(rightBuiltin);
+                return;
+            }
+
+            ProcessBuilder pb1 = new ProcessBuilder(left);
+
+            ProcessBuilder pb2 = new ProcessBuilder(right);
 
             pb1.directory(new File(currentDirectory));
             pb2.directory(new File(currentDirectory));
@@ -172,7 +259,6 @@ public class Main {
             Process last = processes.get(processes.size() - 1);
 
             last.getInputStream().transferTo(System.out);
-            last.getErrorStream().transferTo(System.err);
 
             last.waitFor();
 
