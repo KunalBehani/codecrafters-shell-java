@@ -143,6 +143,15 @@ public class Main {
             }
 
             parts = cleanParts.toArray(new String[0]);
+            boolean backgroundJob = false;
+
+            if (parts.length > 0 && parts[parts.length - 1].equals("&")) {
+                backgroundJob = true;
+
+                String[] newParts = new String[parts.length - 1];
+                System.arraycopy(parts, 0, newParts, 0, parts.length - 1);
+                parts = newParts;
+            }
 
             if (parts.length == 0) {
                 continue;
@@ -289,23 +298,28 @@ public class Main {
 
                         Process process = pb.start();
 
-                        if (outputFile != null) {
-                            FileOutputStream fos = new FileOutputStream(outputFile, appendOutput);
-                            process.getInputStream().transferTo(fos);
-                            fos.close();
+                        if (backgroundJob) {
+                            System.out.println("[1] " + process.pid());
                         } else {
-                            process.getInputStream().transferTo(System.out);
-                        }
 
-                        if (errorFile != null) {
-                            try (FileOutputStream errFos = new FileOutputStream(errorFile, appendError)) {
-                                process.getErrorStream().transferTo(errFos);
+                            if (outputFile != null) {
+                                FileOutputStream fos = new FileOutputStream(outputFile, appendOutput);
+                                process.getInputStream().transferTo(fos);
+                                fos.close();
+                            } else {
+                                process.getInputStream().transferTo(System.out);
                             }
-                        } else {
-                            process.getErrorStream().transferTo(System.err);
-                        }
 
-                        process.waitFor();
+                            if (errorFile != null) {
+                                try (FileOutputStream errFos = new FileOutputStream(errorFile, appendError)) {
+                                    process.getErrorStream().transferTo(errFos);
+                                }
+                            } else {
+                                process.getErrorStream().transferTo(System.err);
+                            }
+
+                            process.waitFor();
+                        }
 
                     } catch (Exception e) {
                         e.printStackTrace();
