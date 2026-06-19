@@ -296,11 +296,17 @@ public class Main {
                         ProcessBuilder pb = new ProcessBuilder(parts);
                         pb.directory(new File(currentDirectory));
 
-                        Process process = pb.start();
-
                         if (backgroundJob) {
+
+                            pb.inheritIO();
+
+                            Process process = pb.start();
+
                             System.out.println("[1] " + process.pid());
+
                         } else {
+
+                            Process process = pb.start();
 
                             if (outputFile != null) {
                                 FileOutputStream fos = new FileOutputStream(outputFile, appendOutput);
