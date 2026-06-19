@@ -108,30 +108,38 @@ public class Main {
             String outputFile = null;
             String errorFile = null;
             boolean appendOutput = false;
+            boolean appendError = false;
             List<String> cleanParts = new ArrayList<>();
 
             for (int i = 0; i < parts.length; i++) {
-    if (parts[i].equals(">") || parts[i].equals("1>")) {
-        if (i + 1 < parts.length) {
-            outputFile = parts[i + 1];
-            appendOutput = false;
-        }
-        i++;
-    } else if (parts[i].equals(">>") || parts[i].equals("1>>")) {
-        if (i + 1 < parts.length) {
-            outputFile = parts[i + 1];
-            appendOutput = true;
-        }
-        i++;
-    } else if (parts[i].equals("2>")) {
-        if (i + 1 < parts.length) {
-            errorFile = parts[i + 1];
-        }
-        i++;
-    } else {
-        cleanParts.add(parts[i]);
-    }
-}
+                if (parts[i].equals(">") || parts[i].equals("1>")) {
+                    if (i + 1 < parts.length) {
+                        outputFile = parts[i + 1];
+                        appendOutput = false;
+                    }
+                    i++;
+                } else if (parts[i].equals(">>") || parts[i].equals("1>>")) {
+                    if (i + 1 < parts.length) {
+                        outputFile = parts[i + 1];
+                        appendOutput = true;
+                    }
+                    i++;
+                } else if (parts[i].equals("2>")) {
+                    if (i + 1 < parts.length) {
+                        errorFile = parts[i + 1];
+                        appendError = false;
+                    }
+                    i++;
+                } else if (parts[i].equals("2>>")) {
+                    if (i + 1 < parts.length) {
+                        errorFile = parts[i + 1];
+                        appendError = true;
+                    }
+                    i++;
+                } else {
+                    cleanParts.add(parts[i]);
+                }
+            }
 
             parts = cleanParts.toArray(new String[0]);
 
@@ -144,60 +152,61 @@ public class Main {
             }
 
             else if (parts[0].equals("echo")) {
-    StringBuilder output = new StringBuilder();
+                StringBuilder output = new StringBuilder();
 
-    for (int i = 1; i < parts.length; i++) {
-        if (i > 1) {
-            output.append(" ");
-        }
-        output.append(parts[i]);
-    }
+                for (int i = 1; i < parts.length; i++) {
+                    if (i > 1) {
+                        output.append(" ");
+                    }
+                    output.append(parts[i]);
+                }
 
-    if (outputFile != null) {
-        try {
-            PrintWriter writer = new PrintWriter(
-        new FileOutputStream(outputFile, appendOutput));
-            writer.println(output);
-            writer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    } else {
-        System.out.println(output);
-    }
+                if (outputFile != null) {
+                    try {
+                        PrintWriter writer = new PrintWriter(
+                                new FileOutputStream(outputFile, appendOutput));
+                        writer.println(output);
+                        writer.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println(output);
+                }
 
-    if (errorFile != null) {
-        try (PrintWriter writer = new PrintWriter(errorFile)) {
-            // create empty stderr file
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
+                if (errorFile != null) {
+                    try (PrintWriter writer = new PrintWriter(
+                            new FileOutputStream(errorFile, appendError))) {
+                        // create empty stderr file
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
 
             else if (parts[0].equals("pwd")) {
-    if (outputFile != null) {
-        try {
-            PrintWriter writer = new PrintWriter(
-        new FileOutputStream(outputFile, appendOutput));
-            writer.println(currentDirectory);
-            writer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    } else {
-        System.out.println(currentDirectory);
-    }
+                if (outputFile != null) {
+                    try {
+                        PrintWriter writer = new PrintWriter(
+                                new FileOutputStream(outputFile, appendOutput));
+                        writer.println(currentDirectory);
+                        writer.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println(currentDirectory);
+                }
 
-    if (errorFile != null) {
-        try (PrintWriter writer = new PrintWriter(errorFile)) {
-            // create empty stderr file
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-            else if (parts[0].equals("cd")) {
+                if (errorFile != null) {
+                    try (PrintWriter writer = new PrintWriter(
+                            new FileOutputStream(errorFile, appendError))) {
+                        // create empty stderr file
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else if (parts[0].equals("cd")) {
                 if (parts.length < 2) {
                     continue;
                 }
@@ -225,47 +234,47 @@ public class Main {
             }
 
             else if (parts[0].equals("type")) {
-    if (parts.length < 2) {
-        continue;
-    }
+                if (parts.length < 2) {
+                    continue;
+                }
 
-    String cmd = parts[1];
-    String result;
+                String cmd = parts[1];
+                String result;
 
-    if (builtins.contains(cmd)) {
-        result = cmd + " is a shell builtin";
-    } else {
-        File executable = findExecutable(cmd);
+                if (builtins.contains(cmd)) {
+                    result = cmd + " is a shell builtin";
+                } else {
+                    File executable = findExecutable(cmd);
 
-        if (executable != null) {
-            result = cmd + " is " + executable.getAbsolutePath();
-        } else {
-            result = cmd + ": not found";
-        }
-    }
+                    if (executable != null) {
+                        result = cmd + " is " + executable.getAbsolutePath();
+                    } else {
+                        result = cmd + ": not found";
+                    }
+                }
 
-    if (outputFile != null) {
-        try {
-            PrintWriter writer = new PrintWriter(
-        new FileOutputStream(outputFile, appendOutput));
-            writer.println(result);
-            writer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    } else {
-        System.out.println(result);
-    }
+                if (outputFile != null) {
+                    try {
+                        PrintWriter writer = new PrintWriter(
+                                new FileOutputStream(outputFile, appendOutput));
+                        writer.println(result);
+                        writer.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println(result);
+                }
 
-    if (errorFile != null) {
-        try (PrintWriter writer = new PrintWriter(errorFile)) {
-            // create empty stderr file
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-            else {
+                if (errorFile != null) {
+                    try (PrintWriter writer = new PrintWriter(
+                            new FileOutputStream(errorFile, appendError))) {
+                        // create empty stderr file
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else {
                 File executable = findExecutable(parts[0]);
 
                 if (executable == null) {
@@ -286,7 +295,7 @@ public class Main {
                         }
 
                         if (errorFile != null) {
-                            try (FileOutputStream errFos = new FileOutputStream(errorFile)) {
+                            try (FileOutputStream errFos = new FileOutputStream(errorFile, appendError)) {
                                 process.getErrorStream().transferTo(errFos);
                             }
                         } else {
@@ -304,4 +313,4 @@ public class Main {
 
         sc.close();
     }
-} 
+}
