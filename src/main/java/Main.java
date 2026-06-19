@@ -210,20 +210,59 @@ public class Main {
 
             String[] pipelineParts = command.split("\\|");
 
+            if (pipelineParts.length == 2) {
+
+                String[] left = parseCommand(pipelineParts[0].trim());
+
+                String[] right = parseCommand(pipelineParts[1].trim());
+
+                String leftBuiltin = executeBuiltinForPipeline(left, builtins);
+
+                String rightBuiltin = executeBuiltinForPipeline(right, builtins);
+
+                if (leftBuiltin != null) {
+
+                    ProcessBuilder pb = new ProcessBuilder(right);
+
+                    pb.directory(new File(currentDirectory));
+
+                    Process process = pb.start();
+
+                    process.getOutputStream()
+                            .write(leftBuiltin.getBytes());
+
+                    process.getOutputStream().close();
+
+                    process.getInputStream()
+                            .transferTo(System.out);
+
+                    process.waitFor();
+                    return;
+                }
+
+                if (rightBuiltin != null) {
+
+                    ProcessBuilder pb = new ProcessBuilder(left);
+
+                    pb.directory(new File(currentDirectory));
+
+                    Process process = pb.start();
+
+                    process.waitFor();
+
+                    System.out.print(rightBuiltin);
+                    return;
+                }
+            }
+
             List<ProcessBuilder> builders = new ArrayList<>();
 
             for (String part : pipelineParts) {
 
                 String[] cmd = parseCommand(part.trim());
 
-                String builtinResult = executeBuiltinForPipeline(cmd, builtins);
-
-                if (builtinResult != null) {
-                    System.out.print(builtinResult);
-                    return;
-                }
-
                 ProcessBuilder pb = new ProcessBuilder(cmd);
+
                 pb.directory(new File(currentDirectory));
 
                 builders.add(pb);
