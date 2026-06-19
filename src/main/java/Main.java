@@ -107,23 +107,31 @@ public class Main {
 
             String outputFile = null;
             String errorFile = null;
+            boolean appendOutput = false;
             List<String> cleanParts = new ArrayList<>();
 
             for (int i = 0; i < parts.length; i++) {
-                if (parts[i].equals(">") || parts[i].equals("1>")) {
-                    if (i + 1 < parts.length) {
-                        outputFile = parts[i + 1];
-                    }
-                    i++;
-                } else if (parts[i].equals("2>")) {
-                    if (i + 1 < parts.length) {
-                        errorFile = parts[i + 1];
-                    }
-                    i++;
-                } else {
-                    cleanParts.add(parts[i]);
-                }
-            }
+    if (parts[i].equals(">") || parts[i].equals("1>")) {
+        if (i + 1 < parts.length) {
+            outputFile = parts[i + 1];
+            appendOutput = false;
+        }
+        i++;
+    } else if (parts[i].equals(">>") || parts[i].equals("1>>")) {
+        if (i + 1 < parts.length) {
+            outputFile = parts[i + 1];
+            appendOutput = true;
+        }
+        i++;
+    } else if (parts[i].equals("2>")) {
+        if (i + 1 < parts.length) {
+            errorFile = parts[i + 1];
+        }
+        i++;
+    } else {
+        cleanParts.add(parts[i]);
+    }
+}
 
             parts = cleanParts.toArray(new String[0]);
 
@@ -147,7 +155,8 @@ public class Main {
 
     if (outputFile != null) {
         try {
-            PrintWriter writer = new PrintWriter(outputFile);
+            PrintWriter writer = new PrintWriter(
+        new FileOutputStream(outputFile, appendOutput));
             writer.println(output);
             writer.close();
         } catch (Exception e) {
@@ -169,7 +178,8 @@ public class Main {
             else if (parts[0].equals("pwd")) {
     if (outputFile != null) {
         try {
-            PrintWriter writer = new PrintWriter(outputFile);
+            PrintWriter writer = new PrintWriter(
+        new FileOutputStream(outputFile, appendOutput));
             writer.println(currentDirectory);
             writer.close();
         } catch (Exception e) {
@@ -236,7 +246,8 @@ public class Main {
 
     if (outputFile != null) {
         try {
-            PrintWriter writer = new PrintWriter(outputFile);
+            PrintWriter writer = new PrintWriter(
+        new FileOutputStream(outputFile, appendOutput));
             writer.println(result);
             writer.close();
         } catch (Exception e) {
@@ -267,7 +278,7 @@ public class Main {
                         Process process = pb.start();
 
                         if (outputFile != null) {
-                            FileOutputStream fos = new FileOutputStream(outputFile);
+                            FileOutputStream fos = new FileOutputStream(outputFile, appendOutput);
                             process.getInputStream().transferTo(fos);
                             fos.close();
                         } else {
