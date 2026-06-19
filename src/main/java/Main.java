@@ -306,36 +306,51 @@ public class Main {
                 }
             } else if (parts[0].equals("jobs")) {
 
-                reapJobs(jobsList);
-
-                List<Job> activeJobs = new ArrayList<>();
+                List<Job> visibleJobs = new ArrayList<>();
+                List<Job> jobsToRemove = new ArrayList<>();
 
                 for (Job job : jobsList) {
-                    if (job.process.isAlive()) {
-                        activeJobs.add(job);
+                    if (job.process.isAlive() || !job.doneShown) {
+                        visibleJobs.add(job);
                     }
                 }
 
-                for (int i = 0; i < activeJobs.size(); i++) {
+                for (int i = 0; i < visibleJobs.size(); i++) {
 
-                    Job job = activeJobs.get(i);
+                    Job job = visibleJobs.get(i);
 
                     char marker = ' ';
 
-                    if (activeJobs.size() == 1) {
+                    if (visibleJobs.size() == 1) {
                         marker = '+';
-                    } else if (i == activeJobs.size() - 1) {
+                    } else if (i == visibleJobs.size() - 1) {
                         marker = '+';
-                    } else if (i == activeJobs.size() - 2) {
+                    } else if (i == visibleJobs.size() - 2) {
                         marker = '-';
                     }
 
-                    System.out.printf("[%d]%c  %-24s%s%n",
-                            job.jobNumber,
-                            marker,
-                            "Running",
-                            job.command);
+                    if (job.process.isAlive()) {
+
+                        System.out.printf("[%d]%c  %-24s%s%n",
+                                job.jobNumber,
+                                marker,
+                                "Running",
+                                job.command);
+
+                    } else {
+
+                        System.out.printf("[%d]%c  %-24s%s%n",
+                                job.jobNumber,
+                                marker,
+                                "Done",
+                                job.command.replaceAll("\\s*&\\s*$", ""));
+
+                        job.doneShown = true;
+                        jobsToRemove.add(job);
+                    }
                 }
+
+                jobsList.removeAll(jobsToRemove);
             }
 
             else if (parts[0].equals("type")) {
