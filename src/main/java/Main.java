@@ -457,6 +457,13 @@ public class Main {
                 List<Job> jobsToRemove = new ArrayList<>();
 
                 for (Job job : jobsList) {
+
+                    try {
+                        job.process.exitValue();
+                    } catch (IllegalThreadStateException ignored) {
+                        // still running
+                    }
+
                     if (job.process.isAlive() || !job.doneShown) {
                         visibleJobs.add(job);
                     }
