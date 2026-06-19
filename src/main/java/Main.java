@@ -8,20 +8,20 @@ import java.util.Set;
 
 public class Main {
     static class Job {
-    int jobNumber;
-    long pid;
-    String command;
-    Process process;
-    boolean doneShown;
+        int jobNumber;
+        long pid;
+        String command;
+        Process process;
+        boolean doneShown;
 
-    Job(int jobNumber, long pid, String command, Process process) {
-        this.jobNumber = jobNumber;
-        this.pid = pid;
-        this.command = command;
-        this.process = process;
-        this.doneShown = false;
+        Job(int jobNumber, long pid, String command, Process process) {
+            this.jobNumber = jobNumber;
+            this.pid = pid;
+            this.command = command;
+            this.process = process;
+            this.doneShown = false;
+        }
     }
-}
 
     private static File findExecutable(String command) {
         String pathEnv = System.getenv("PATH");
@@ -260,57 +260,53 @@ public class Main {
                 }
             } else if (parts[0].equals("jobs")) {
 
-    List<Job> jobsToRemove = new ArrayList<>();
+                List<Job> jobsToRemove = new ArrayList<>();
 
-    int activeJobs = 0;
+                List<Job> visibleJobs = new ArrayList<>();
 
-    for (Job job : jobsList) {
-        if (job.process.isAlive()) {
-            activeJobs++;
-        }
-    }
+                for (Job job : jobsList) {
+                    if (job.process.isAlive() || !job.doneShown) {
+                        visibleJobs.add(job);
+                    }
+                }
 
-    int activeIndex = 0;
+                for (int i = 0; i < visibleJobs.size(); i++) {
 
-    for (Job job : jobsList) {
+                    Job job = visibleJobs.get(i);
 
-        if (job.process.isAlive()) {
+                    char marker = ' ';
 
-            activeIndex++;
+                    if (visibleJobs.size() == 1) {
+                        marker = '+';
+                    } else if (i == visibleJobs.size() - 1) {
+                        marker = '+';
+                    } else if (i == visibleJobs.size() - 2) {
+                        marker = '-';
+                    }
 
-            char marker = ' ';
+                    if (job.process.isAlive()) {
 
-            if (activeJobs == 1) {
-                marker = '+';
-            } else if (activeIndex == activeJobs) {
-                marker = '+';
-            } else if (activeIndex == activeJobs - 1) {
-                marker = '-';
+                        System.out.printf("[%d]%c  %-24s%s%n",
+                                job.jobNumber,
+                                marker,
+                                "Running",
+                                job.command);
+
+                    } else {
+
+                        System.out.printf("[%d]%c  %-24s%s%n",
+                                job.jobNumber,
+                                marker,
+                                "Done",
+                                job.command.replaceAll("\\s*&\\s*$", ""));
+
+                        job.doneShown = true;
+                        jobsToRemove.add(job);
+                    }
+                }
+
+                jobsList.removeAll(jobsToRemove);
             }
-
-            System.out.printf("[%d]%c  %-24s%s%n",
-                    job.jobNumber,
-                    marker,
-                    "Running",
-                    job.command);
-
-        } else {
-
-            if (!job.doneShown) {
-
-                System.out.printf("[%d]+  %-24s%s%n",
-                        job.jobNumber,
-                        "Done",
-                        job.command.replaceAll("\\s*&\\s*$", ""));
-
-                job.doneShown = true;
-                jobsToRemove.add(job);
-            }
-        }
-    }
-
-    jobsList.removeAll(jobsToRemove);
-}
 
             else if (parts[0].equals("type")) {
                 if (parts.length < 2) {
