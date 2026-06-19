@@ -7,6 +7,19 @@ import java.util.Scanner;
 import java.util.Set;
 
 public class Main {
+    static class Job {
+        int jobNumber;
+        long pid;
+        String command;
+        Process process;
+
+        Job(int jobNumber, long pid, String command, Process process) {
+            this.jobNumber = jobNumber;
+            this.pid = pid;
+            this.command = command;
+            this.process = process;
+        }
+    }
 
     private static File findExecutable(String command) {
         String pathEnv = System.getenv("PATH");
@@ -87,6 +100,8 @@ public class Main {
         Scanner sc = new Scanner(System.in);
 
         String currentDirectory = System.getProperty("user.dir");
+        List<Job> jobsList = new ArrayList<>();
+        int nextJobNumber = 1;
 
         Set<String> builtins = Set.of(
                 "echo",
@@ -242,7 +257,14 @@ public class Main {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
             } else if (parts[0].equals("jobs")) {
-                // Intentionally empty for this stage
+                for (Job job : jobsList) {
+                    if (job.process.isAlive()) {
+                        System.out.printf("[%d]+  %-24s%s%n",
+                                job.jobNumber,
+                                "Running",
+                                job.command);
+                    }
+                }
             }
 
             else if (parts[0].equals("type")) {
@@ -302,8 +324,17 @@ public class Main {
 
                             Process process = pb.start();
 
-                            System.out.println("[1] " + process.pid());
+                            Job job = new Job(
+                                    nextJobNumber,
+                                    process.pid(),
+                                    command,
+                                    process);
 
+                            jobsList.add(job);
+
+                            System.out.println("[" + nextJobNumber + "] " + process.pid());
+
+                            nextJobNumber++;
                         } else {
 
                             Process process = pb.start();
