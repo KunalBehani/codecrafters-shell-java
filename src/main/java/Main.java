@@ -1,4 +1,6 @@
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -25,7 +27,7 @@ public class Main {
     }
 
     private static String[] parseCommand(String input) {
-        java.util.List<String> args = new java.util.ArrayList<>();
+        List<String> args = new ArrayList<>();
         StringBuilder current = new StringBuilder();
 
         boolean inSingleQuotes = false;
@@ -103,13 +105,30 @@ public class Main {
             String command = sc.nextLine();
             String[] parts = parseCommand(command);
 
+            String outputFile = null;
+            List<String> cleanParts = new ArrayList<>();
+
+            for (int i = 0; i < parts.length; i++) {
+                if (parts[i].equals(">") || parts[i].equals("1>")) {
+                    if (i + 1 < parts.length) {
+                        outputFile = parts[i + 1];
+                    }
+                    break;
+                }
+                cleanParts.add(parts[i]);
+            }
+
+            parts = cleanParts.toArray(new String[0]);
+
             if (parts.length == 0) {
                 continue;
             }
 
             if (command.equals("exit") || command.equals("exit 0")) {
                 break;
-            } else if (parts[0].equals("echo")) {
+            }
+
+            else if (parts[0].equals("echo")) {
                 StringBuilder output = new StringBuilder();
 
                 for (int i = 1; i < parts.length; i++) {
@@ -119,16 +138,39 @@ public class Main {
                     output.append(parts[i]);
                 }
 
-                System.out.println(output);
-            } else if (parts[0].equals("pwd")) {
-                System.out.println(currentDirectory);
-            } else if (parts[0].equals("cd")) {
+                if (outputFile != null) {
+                    try {
+                        PrintWriter writer = new PrintWriter(outputFile);
+                        writer.println(output);
+                        writer.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println(output);
+                }
+            }
+
+            else if (parts[0].equals("pwd")) {
+                if (outputFile != null) {
+                    try {
+                        PrintWriter writer = new PrintWriter(outputFile);
+                        writer.println(currentDirectory);
+                        writer.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println(currentDirectory);
+                }
+            }
+
+            else if (parts[0].equals("cd")) {
                 if (parts.length < 2) {
                     continue;
                 }
 
                 String path = parts[1];
-
                 File target;
 
                 if (path.equals("~")) {
@@ -148,25 +190,42 @@ public class Main {
                 } else {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
-            } else if (parts[0].equals("type")) {
+            }
+
+            else if (parts[0].equals("type")) {
                 if (parts.length < 2) {
                     continue;
                 }
 
                 String cmd = parts[1];
+                String result;
 
                 if (builtins.contains(cmd)) {
-                    System.out.println(cmd + " is a shell builtin");
+                    result = cmd + " is a shell builtin";
                 } else {
                     File executable = findExecutable(cmd);
 
                     if (executable != null) {
-                        System.out.println(cmd + " is " + executable.getAbsolutePath());
+                        result = cmd + " is " + executable.getAbsolutePath();
                     } else {
-                        System.out.println(cmd + ": not found");
+                        result = cmd + ": not found";
                     }
                 }
-            } else {
+
+                if (outputFile != null) {
+                    try {
+                        PrintWriter writer = new PrintWriter(outputFile);
+                        writer.println(result);
+                        writer.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println(result);
+                }
+            }
+
+            else {
                 File executable = findExecutable(parts[0]);
 
                 if (executable == null) {
@@ -178,10 +237,18 @@ public class Main {
 
                         Process process = pb.start();
 
-                        process.getInputStream().transferTo(System.out);
+                        if (outputFile != null) {
+                            FileOutputStream fos = new FileOutputStream(outputFile);
+                            process.getInputStream().transferTo(fos);
+                            fos.close();
+                        } else {
+                            process.getInputStream().transferTo(System.out);
+                        }
+
                         process.getErrorStream().transferTo(System.err);
 
                         process.waitFor();
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
