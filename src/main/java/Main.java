@@ -257,13 +257,40 @@ public class Main {
                     System.out.println("cd: " + path + ": No such file or directory");
                 }
             } else if (parts[0].equals("jobs")) {
+
+                int runningCount = 0;
+
                 for (Job job : jobsList) {
                     if (job.process.isAlive()) {
-                        System.out.printf("[%d]+  %-24s%s%n",
-                                job.jobNumber,
-                                "Running",
-                                job.command);
+                        runningCount++;
                     }
+                }
+
+                int currentRunning = 0;
+
+                for (Job job : jobsList) {
+
+                    if (!job.process.isAlive()) {
+                        continue;
+                    }
+
+                    currentRunning++;
+
+                    char marker = ' ';
+
+                    if (runningCount == 1) {
+                        marker = '+';
+                    } else if (currentRunning == runningCount) {
+                        marker = '+';
+                    } else if (currentRunning == runningCount - 1) {
+                        marker = '-';
+                    }
+
+                    System.out.printf("[%d]%c  %-24s%s%n",
+                            job.jobNumber,
+                            marker,
+                            "Running",
+                            job.command);
                 }
             }
 
