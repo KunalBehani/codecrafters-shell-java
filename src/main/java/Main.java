@@ -158,11 +158,7 @@ public class Main {
 
     private static void executePipeline(String command, String currentDirectory) {
         try {
-            String[] commandParts = command.split("\\|");
-
-            if (commandParts.length != 2) {
-                return;
-            }
+            String[] commandParts = command.split("\\|", 2);
 
             String[] leftCmd = parseCommand(commandParts[0].trim());
             String[] rightCmd = parseCommand(commandParts[1].trim());
@@ -174,9 +170,11 @@ public class Main {
             pb2.directory(new File(currentDirectory));
 
             Process p1 = pb1.start();
+
+            pb2.redirectInput(ProcessBuilder.Redirect.PIPE);
             Process p2 = pb2.start();
 
-            Thread pipeThread = new Thread(() -> {
+            Thread t = new Thread(() -> {
                 try {
                     p1.getInputStream().transferTo(p2.getOutputStream());
                     p2.getOutputStream().close();
@@ -184,14 +182,17 @@ public class Main {
                 }
             });
 
-            pipeThread.start();
+            t.setDaemon(true);
+            t.start();
 
             p2.getInputStream().transferTo(System.out);
             p2.getErrorStream().transferTo(System.err);
 
-            p1.waitFor();
             p2.waitFor();
-            pipeThread.join();
+
+            if (p1.isAlive()) {
+                p1.destroy();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
