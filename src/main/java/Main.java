@@ -156,6 +156,48 @@ public class Main {
         return maxJobNumber + 1;
     }
 
+    private static void executePipeline(String command, String currentDirectory) {
+        try {
+            String[] commandParts = command.split("\\|");
+
+            if (commandParts.length != 2) {
+                return;
+            }
+
+            String[] leftCmd = parseCommand(commandParts[0].trim());
+            String[] rightCmd = parseCommand(commandParts[1].trim());
+
+            ProcessBuilder pb1 = new ProcessBuilder(leftCmd);
+            ProcessBuilder pb2 = new ProcessBuilder(rightCmd);
+
+            pb1.directory(new File(currentDirectory));
+            pb2.directory(new File(currentDirectory));
+
+            Process p1 = pb1.start();
+            Process p2 = pb2.start();
+
+            Thread pipeThread = new Thread(() -> {
+                try {
+                    p1.getInputStream().transferTo(p2.getOutputStream());
+                    p2.getOutputStream().close();
+                } catch (Exception ignored) {
+                }
+            });
+
+            pipeThread.start();
+
+            p2.getInputStream().transferTo(System.out);
+            p2.getErrorStream().transferTo(System.err);
+
+            p1.waitFor();
+            p2.waitFor();
+            pipeThread.join();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
@@ -181,6 +223,10 @@ public class Main {
             }
 
             String command = sc.nextLine();
+            if (command.contains("|")) {
+                executePipeline(command, currentDirectory);
+                continue;
+            }
             String[] parts = parseCommand(command);
 
             String outputFile = null;
