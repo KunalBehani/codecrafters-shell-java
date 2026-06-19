@@ -208,59 +208,37 @@ public class Main {
 
         try {
 
-            String[] pipelineParts = command.split("\\|", 2);
+            String[] pipelineParts = command.split("\\|");
 
-            String[] left = parseCommand(pipelineParts[0].trim());
-            String[] right = parseCommand(pipelineParts[1].trim());
+            List<ProcessBuilder> builders = new ArrayList<>();
 
-            String leftBuiltin = executeBuiltinForPipeline(left, builtins);
-            String rightBuiltin = executeBuiltinForPipeline(right, builtins);
+            for (String part : pipelineParts) {
 
-            if (leftBuiltin != null) {
+                String[] cmd = parseCommand(part.trim());
 
-                ProcessBuilder pb = new ProcessBuilder(right);
+                String builtinResult = executeBuiltinForPipeline(cmd, builtins);
 
+                if (builtinResult != null) {
+                    System.out.print(builtinResult);
+                    return;
+                }
+
+                ProcessBuilder pb = new ProcessBuilder(cmd);
                 pb.directory(new File(currentDirectory));
 
-                Process process = pb.start();
-
-                process.getOutputStream().write(leftBuiltin.getBytes());
-                process.getOutputStream().close();
-
-                process.getInputStream().transferTo(System.out);
-
-                process.waitFor();
-                return;
+                builders.add(pb);
             }
 
-            if (rightBuiltin != null) {
-
-                ProcessBuilder pb = new ProcessBuilder(left);
-
-                pb.directory(new File(currentDirectory));
-
-                Process process = pb.start();
-
-                process.waitFor();
-
-                System.out.print(rightBuiltin);
-                return;
-            }
-
-            ProcessBuilder pb1 = new ProcessBuilder(left);
-
-            ProcessBuilder pb2 = new ProcessBuilder(right);
-
-            pb1.directory(new File(currentDirectory));
-            pb2.directory(new File(currentDirectory));
-
-            List<Process> processes = ProcessBuilder.startPipeline(List.of(pb1, pb2));
+            List<Process> processes = ProcessBuilder.startPipeline(builders);
 
             Process last = processes.get(processes.size() - 1);
 
             last.getInputStream().transferTo(System.out);
+            last.getErrorStream().transferTo(System.err);
 
-            last.waitFor();
+            for (Process p : processes) {
+                p.waitFor();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
